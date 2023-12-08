@@ -14,8 +14,8 @@ type LoggerParams struct {
 
 var term = slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
-func (l *LoggerParams) New() *LoggerParams {
-	return l
+func (lps *LoggerParams) New() *LoggerParams {
+	return lps
 }
 
 func logToFile(path string) *slog.Logger {
