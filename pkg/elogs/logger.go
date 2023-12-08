@@ -14,6 +14,10 @@ type LoggerParams struct {
 
 var term = slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
+func (l *LoggerParams) New() *LoggerParams {
+	return l
+}
+
 func logToFile(path string) *slog.Logger {
 	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
@@ -23,7 +27,7 @@ func logToFile(path string) *slog.Logger {
 }
 
 func (l *LoggerParams) Info(msg string, args ...any) {
-	if l.LogLevel == 0 || l.LogLevel == 1 || l.LogLevel <= 2 {
+	if l.LogLevel >= 0 {
 		args = append(args, "service_name", l.ServiceName)
 		if l.TerminalMsg {
 			term.Info(msg, args...)
@@ -35,7 +39,7 @@ func (l *LoggerParams) Info(msg string, args ...any) {
 }
 
 func (l *LoggerParams) Error(msg string, args ...any) {
-	if l.LogLevel == 0 || l.LogLevel == 1 {
+	if l.LogLevel >= 1 {
 		args = append(args, "service_name", l.ServiceName)
 		if l.TerminalMsg {
 			term.Error(msg, args...)
@@ -47,7 +51,7 @@ func (l *LoggerParams) Error(msg string, args ...any) {
 }
 
 func (l *LoggerParams) Warn(msg string, args ...any) {
-	if l.LogLevel <= 2 {
+	if l.LogLevel >= 2 {
 		args = append(args, "service_name", l.ServiceName)
 		if l.TerminalMsg {
 			term.Warn(msg, args...)
