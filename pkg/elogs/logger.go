@@ -1,63 +1,84 @@
 package elogs
 
 import (
+	"log"
 	"log/slog"
 	"os"
 )
 
-type LoggerParams struct {
+type Params struct {
 	ServiceName string
 	PathToWrite string
 	TerminalMsg bool
 	LogLevel    int
+	RotateSize  int64
 }
 
 var term = slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
-func (lps *LoggerParams) New() *LoggerParams {
-	return lps
+func (p *Params) New() *Params {
+	return p
 }
 
-func logToFile(path string) *slog.Logger {
-	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+func (p *Params) fileSize() int64 {
+	f, err := os.Stat(p.PathToWrite)
 	if err != nil {
-		term.Error("error opening file", path, err)
+		log.Println("Stat ")
+	}
+	return f.Size()
+}
+
+func (p *Params) removeFile() {
+	if p.fileSize() >= p.RotateSize {
+		err := os.Remove(p.PathToWrite)
+		if err != nil {
+			log.Println("remove log file", err)
+		}
+	}
+
+}
+
+func (p *Params) logToFile() *slog.Logger {
+	p.removeFile()
+	f, err := os.OpenFile(p.PathToWrite, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		term.Error("error opening file", p.PathToWrite, err)
 	}
 	return slog.New(slog.NewJSONHandler(f, nil))
 }
 
-func (l *LoggerParams) Info(msg string, args ...any) {
-	if l.LogLevel >= 0 {
-		args = append(args, "service_name", l.ServiceName)
-		if l.TerminalMsg {
+func (p *Params) Info(msg string, args ...any) {
+	if p.LogLevel >= 0 {
+		args = append(args, "service_name", p.ServiceName)
+		if p.TerminalMsg {
 			term.Info(msg, args...)
 		}
-		if l.PathToWrite != "" {
-			logToFile(l.PathToWrite).Info(msg, args...)
+		if p.PathToWrite != "" {
+			p.logToFile().Info(msg, args...)
 		}
 	}
 }
 
-func (l *LoggerParams) Error(msg string, args ...any) {
-	if l.LogLevel >= 1 {
-		args = append(args, "service_name", l.ServiceName)
-		if l.TerminalMsg {
+func (p *Params) Error(msg string, args ...any) {
+	if p.LogLevel >= 1 {
+		args = append(args, "service_name", p.ServiceName)
+		if p.TerminalMsg {
 			term.Error(msg, args...)
 		}
-		if l.PathToWrite != "" {
-			logToFile(l.PathToWrite).Error(msg, args...)
+		if p.PathToWrite != "" {
+			p.logToFile().Error(msg, args...)
 		}
 	}
 }
 
-func (l *LoggerParams) Warn(msg string, args ...any) {
-	if l.LogLevel >= 2 {
-		args = append(args, "service_name", l.ServiceName)
-		if l.TerminalMsg {
+func (p *Params) Warn(msg string, args ...any) {
+	if p.LogLevel >= 2 {
+		args = append(args, "service_name", p.ServiceName)
+		if p.TerminalMsg {
 			term.Warn(msg, args...)
 		}
-		if l.PathToWrite != "" {
-			logToFile(l.PathToWrite).Warn(msg, args...)
+		if p.PathToWrite != "" {
+			p.logToFile().Warn(msg, args...)
 		}
 	}
 }
