@@ -40,7 +40,7 @@ func (p *Params) removeFile() {
 
 func (p *Params) logToFile() *slog.Logger {
 	p.removeFile()
-	f, err := os.OpenFile(p.PathToWrite, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	f, err := os.OpenFile(p.PathToWrite, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0600)
 	if err != nil {
 		term.Error("error opening file", p.PathToWrite, err)
 	}
